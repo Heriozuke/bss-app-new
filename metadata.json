@@ -1,0 +1,6 @@
+{
+  "name": "Fito Fitness Dashboard",
+  "description": "A responsive and beautiful fitness, workout, and diet tracking dashboard containing statistics, progress visualization, and program schedules.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
