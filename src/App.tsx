@@ -173,6 +173,9 @@ export default function App() {
           setAssignedClientLocation(found.clientAssigned || 'Remote / WFH (Rumah)');
         }
       }
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      }
     }
   }, []);
 
@@ -734,10 +737,20 @@ export default function App() {
     <div className={darkMode ? 'dark font-sans text-slate-100' : 'font-sans text-slate-800'}>
       <div className="min-h-screen bg-[#f5f7f5] dark:bg-slate-950 flex transition-colors duration-300">
         
+        {/* Mobile Sidebar Backdrop Overlay */}
+        {sidebarOpen && (
+          <div 
+            onClick={() => setSidebarOpen(false)} 
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden"
+          />
+        )}
+
         {/* SIDEBAR NAVIGATION */}
         <aside
-          className={`shrink-0 border-r border-slate-100 dark:border-slate-900 bg-white dark:bg-slate-900 transition-all duration-300 flex flex-col justify-between relative z-40 no-print ${
-            sidebarOpen ? 'w-64 px-5 py-6' : 'w-0 overflow-hidden px-0 py-6 border-r-0'
+          className={`fixed lg:static inset-y-0 left-0 shrink-0 border-r border-slate-100 dark:border-slate-900 bg-white dark:bg-slate-900 transition-all duration-300 flex flex-col justify-between z-50 lg:z-40 no-print ${
+            sidebarOpen 
+              ? 'w-64 px-5 py-6 translate-x-0' 
+              : 'w-64 lg:w-0 overflow-hidden px-0 py-6 border-r-0 -translate-x-full lg:translate-x-0'
           }`}
         >
           <div className="flex flex-col h-full justify-between">
@@ -768,7 +781,12 @@ export default function App() {
                     return (
                       <li key={item.path}>
                         <button
-                          onClick={() => setActiveTab(item.path as TabType)}
+                          onClick={() => {
+                            setActiveTab(item.path as TabType);
+                            if (window.innerWidth < 1024) {
+                              setSidebarOpen(false);
+                            }
+                          }}
                           className={`w-full flex items-center gap-3 py-2.5 px-3 rounded-xl text-xs font-bold transition-all text-left block cursor-pointer ${
                             isActive
                               ? 'text-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/10'
