@@ -1,6 +1,5 @@
-@import "tailwindcss";
-
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
 
 @theme {
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
@@ -22,4 +21,187 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(156, 163, 175, 0.5);
 }
+
+/* Floating Animation */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Print Media Styles */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  
+  .no-print, 
+  header, 
+  aside, 
+  button,
+  .no-print * {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .print-raw {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .print-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Stats Chart Path Drawing Animation */
+@keyframes drawPath {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-draw-path-1 {
+  stroke-dasharray: 1500;
+  stroke-dashoffset: 1500;
+  animation: drawPath 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-draw-path-2 {
+  stroke-dasharray: 1500;
+  stroke-dashoffset: 1500;
+  animation: drawPath 2s cubic-bezier(0.22, 1, 0.36, 1) 0.25s forwards;
+}
+
+.animate-draw-path-3 {
+  stroke-dasharray: 1500;
+  stroke-dashoffset: 1500;
+  animation: drawPath 2s cubic-bezier(0.22, 1, 0.36, 1) 0.5s forwards;
+}
+
+/* Popping Circle Animation */
+@keyframes popCircle {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-pop-circle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: popCircle 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Continuous Animations */
+@keyframes breathe-glow {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.animate-breathe-glow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: breathe-glow 3s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3.5s ease-in-out infinite;
+}
+
+@keyframes pulse-icon {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+.animate-pulse-icon {
+  display: inline-block;
+  animation: pulse-icon 2.5s ease-in-out infinite;
+}
+
+/* Bounce Left Animation for Back Button */
+@keyframes bounce-left {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-6px);
+  }
+}
+
+.animate-bounce-left {
+  animation: bounce-left 1.2s ease-in-out infinite;
+}
+
+/* Breathing Red Glow for PKWT End */
+@keyframes pulse-red-glow {
+  0%, 100% {
+    background-color: rgba(244, 63, 94, 0.08);
+    box-shadow: inset 0 0 4px rgba(244, 63, 94, 0.15);
+  }
+  50% {
+    background-color: rgba(244, 63, 94, 0.22);
+    box-shadow: inset 0 0 12px rgba(244, 63, 94, 0.35);
+  }
+}
+
+.animate-pulse-red-glow {
+  animation: pulse-red-glow 2s infinite ease-in-out;
+}
+
+
 

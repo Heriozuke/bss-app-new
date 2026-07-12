@@ -1,3 +1,5 @@
+import { Payslip } from '../types';
+
 export interface Employee {
   id: string;
   email: string;
@@ -13,6 +15,7 @@ export interface Employee {
   gender?: 'LAKI_LAKI' | 'PEREMPUAN';
   jabatan?: string;
   role: 'ADMIN' | 'KARYAWAN_INTERNAL' | 'KARYAWAN_OUTSOURCING' | 'KARYAWAN_MAGANG' | 'KLIEN';
+  avatar?: string;
   
   // Kontrak / PKWT
   periodePkwtAwal?: string;
@@ -297,6 +300,113 @@ const DEFAULT_ATTENDANCES: Attendance[] = [
   }
 ];
 
+const DEFAULT_PAYSLIPS: Payslip[] = [
+  {
+    id: "slip-1",
+    employeeId: "emp-1",
+    employeeName: "Muhamad Sholeh",
+    employeeNik: "KI250509001",
+    jabatan: "IT Support Specialist",
+    penempatan: "PT. BSS Head Office",
+    rekening: "Mandiri - 1240009876543",
+    periodMonth: "07",
+    periodYear: "2026",
+    attendanceHadir: 22,
+    attendanceSakit: 0,
+    attendanceIzin: 0,
+    attendanceAlpa: 0,
+    gajiPokok: 7500000,
+    tunjanganJabatan: 1000000,
+    tunjanganMakanTransport: 550000,
+    tunjanganLainnya: 0,
+    potonganBpjsKesehatan: 75000,
+    potonganBpjsKetenagakerjaan: 150000,
+    potonganPPh21: 120000,
+    potonganAbsensi: 0,
+    potonganLainnya: 0,
+    totalPenerimaan: 9050000,
+    totalPotongan: 345000,
+    takeHomePay: 8705000,
+    createdAt: "2026-07-10T10:00:00.000Z",
+    note: "Gaji Bulan Juli 2026 - Transfer Mandiri"
+  },
+  {
+    id: "slip-2",
+    employeeId: "emp-2",
+    employeeName: "Desi Putri Sinaga",
+    employeeNik: "KO250509002",
+    jabatan: "Admin Gudang",
+    penempatan: "PT. Pertamina",
+    rekening: "Mandiri - 1240007654321",
+    periodMonth: "07",
+    periodYear: "2026",
+    attendanceHadir: 20,
+    attendanceSakit: 1,
+    attendanceIzin: 1,
+    attendanceAlpa: 0,
+    gajiPokok: 5200000,
+    tunjanganJabatan: 0,
+    tunjanganMakanTransport: 500000,
+    tunjanganLainnya: 0,
+    potonganBpjsKesehatan: 52000,
+    potonganBpjsKetenagakerjaan: 104000,
+    potonganPPh21: 45000,
+    potonganAbsensi: 0,
+    potonganLainnya: 0,
+    totalPenerimaan: 5700000,
+    totalPotongan: 201000,
+    takeHomePay: 5499000,
+    createdAt: "2026-07-10T10:15:00.000Z",
+    note: "Gaji Bulan Juli 2026 - Penempatan Pertamina"
+  }
+];
+
+export interface PayrollConfig {
+  gajiPokok: number;
+  tunjanganJabatan: number;
+  tunjanganMakanTransport: number; // daily
+  potonganBpjsKesehatan: number; // in %
+  potonganBpjsKetenagakerjaan: number; // in %
+  potonganPPh21: number; // in %
+  potonganAlpa: number; // daily penalty
+}
+
+export interface PayrollSettings {
+  KARYAWAN_INTERNAL: PayrollConfig;
+  KARYAWAN_OUTSOURCING: PayrollConfig;
+  KARYAWAN_MAGANG: PayrollConfig;
+}
+
+export const DEFAULT_PAYROLL_SETTINGS: PayrollSettings = {
+  KARYAWAN_INTERNAL: {
+    gajiPokok: 7500000,
+    tunjanganJabatan: 1000000,
+    tunjanganMakanTransport: 25000,
+    potonganBpjsKesehatan: 1,
+    potonganBpjsKetenagakerjaan: 2,
+    potonganPPh21: 1,
+    potonganAlpa: 150000
+  },
+  KARYAWAN_OUTSOURCING: {
+    gajiPokok: 5200000,
+    tunjanganJabatan: 0,
+    tunjanganMakanTransport: 25000,
+    potonganBpjsKesehatan: 1,
+    potonganBpjsKetenagakerjaan: 2,
+    potonganPPh21: 0,
+    potonganAlpa: 100000
+  },
+  KARYAWAN_MAGANG: {
+    gajiPokok: 2500000,
+    tunjanganJabatan: 0,
+    tunjanganMakanTransport: 15000,
+    potonganBpjsKesehatan: 0,
+    potonganBpjsKetenagakerjaan: 0,
+    potonganPPh21: 0,
+    potonganAlpa: 50000
+  }
+};
+
 function isBrowser(): boolean {
   return typeof window !== 'undefined';
 }
@@ -309,6 +419,12 @@ export function initDb(): void {
   }
   if (!localStorage.getItem("bss_attendances")) {
     localStorage.setItem("bss_attendances", JSON.stringify(DEFAULT_ATTENDANCES));
+  }
+  if (!localStorage.getItem("bss_payslips")) {
+    localStorage.setItem("bss_payslips", JSON.stringify(DEFAULT_PAYSLIPS));
+  }
+  if (!localStorage.getItem("bss_payroll_settings")) {
+    localStorage.setItem("bss_payroll_settings", JSON.stringify(DEFAULT_PAYROLL_SETTINGS));
   }
 }
 
@@ -391,4 +507,56 @@ export function changePassword(userId: string, newPassword: string): void {
   const list = getEmployees();
   const updated = list.map(item => item.id === userId ? { ...item, password: newPassword } : item);
   localStorage.setItem("bss_employees", JSON.stringify(updated));
+}
+
+
+
+export function getPayslips(): Payslip[] {
+  if (!isBrowser()) return DEFAULT_PAYSLIPS;
+  initDb();
+  return JSON.parse(localStorage.getItem("bss_payslips") || "[]");
+}
+
+export function savePayslip(slip: Payslip): Payslip {
+  if (!isBrowser()) return slip;
+  const list = getPayslips();
+  let updated: Payslip[];
+  
+  if (slip.id && list.some(item => item.id === slip.id)) {
+    updated = list.map(item => item.id === slip.id ? { ...item, ...slip } : item);
+  } else {
+    const newSlip: Payslip = { 
+      ...slip, 
+      id: slip.id || "slip-" + Date.now(), 
+      createdAt: slip.createdAt || new Date().toISOString() 
+    };
+    list.unshift(newSlip);
+    updated = list;
+  }
+  
+  localStorage.setItem("bss_payslips", JSON.stringify(updated));
+  return slip;
+}
+
+export function deletePayslip(id: string): void {
+  if (!isBrowser()) return;
+  const list = getPayslips();
+  const filtered = list.filter(item => item.id !== id);
+  localStorage.setItem("bss_payslips", JSON.stringify(filtered));
+}
+
+export function getPayrollSettings(): PayrollSettings {
+  if (!isBrowser()) return DEFAULT_PAYROLL_SETTINGS;
+  initDb();
+  const stored = localStorage.getItem("bss_payroll_settings");
+  if (!stored) {
+    localStorage.setItem("bss_payroll_settings", JSON.stringify(DEFAULT_PAYROLL_SETTINGS));
+    return DEFAULT_PAYROLL_SETTINGS;
+  }
+  return JSON.parse(stored);
+}
+
+export function savePayrollSettings(settings: PayrollSettings): void {
+  if (!isBrowser()) return;
+  localStorage.setItem("bss_payroll_settings", JSON.stringify(settings));
 }

@@ -9,7 +9,44 @@ export type TabType =
   | 'task'
   | 'bss-dashboard'
   | 'bss-karyawan'
-  | 'bss-absensi';
+  | 'bss-absensi'
+  | 'bss-payroll'
+  | 'bss-settings'
+  | 'bss-pkwt';
+
+export interface Payslip {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  employeeNik: string;
+  jabatan: string;
+  penempatan: string;
+  rekening: string;
+  periodMonth: string; // "01" - "12"
+  periodYear: string;  // e.g. "2026"
+  
+  attendanceHadir: number;
+  attendanceSakit: number;
+  attendanceIzin: number;
+  attendanceAlpa: number;
+
+  gajiPokok: number;
+  tunjanganJabatan: number;
+  tunjanganMakanTransport: number;
+  tunjanganLainnya: number;
+  
+  potonganBpjsKesehatan: number;
+  potonganBpjsKetenagakerjaan: number;
+  potonganPPh21: number;
+  potonganAbsensi: number;
+  potonganLainnya: number;
+
+  totalPenerimaan: number;
+  totalPotongan: number;
+  takeHomePay: number;
+  createdAt: string;
+  note?: string;
+}
 
 export interface MonthlyStat {
   month: string;

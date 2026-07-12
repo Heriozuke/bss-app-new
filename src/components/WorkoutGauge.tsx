@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Target, Trophy } from 'lucide-react';
 
 interface WorkoutGaugeProps {
@@ -9,9 +9,32 @@ interface WorkoutGaugeProps {
 export default function WorkoutGauge({ percent, onSetPercent }: WorkoutGaugeProps) {
   const [showTargetModal, setShowTargetModal] = useState(false);
   const [tempPercent, setTempPercent] = useState(percent.toString());
+  const [animatedPercent, setAnimatedPercent] = useState(0);
+
+  useEffect(() => {
+    // Initial animation sweep on load or when percent changes
+    setAnimatedPercent(0);
+    const startTimer = setTimeout(() => {
+      setAnimatedPercent(percent);
+    }, 150);
+
+    // Recurring sweep animation every 5 seconds
+    const interval = setInterval(() => {
+      setAnimatedPercent(0);
+      const subTimer = setTimeout(() => {
+        setAnimatedPercent(percent);
+      }, 300);
+      return () => clearTimeout(subTimer);
+    }, 5000);
+
+    return () => {
+      clearTimeout(startTimer);
+      clearInterval(interval);
+    };
+  }, [percent]);
 
   const totalTicks = 42;
-  const activeTicks = Math.round((percent / 100) * totalTicks);
+  const activeTicks = Math.round((animatedPercent / 100) * totalTicks);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,17 +77,22 @@ export default function WorkoutGauge({ percent, onSetPercent }: WorkoutGaugeProp
                 y1={y1}
                 x2={x2}
                 y2={y2}
-                className="transition-all duration-300"
+                className="transition-all duration-500"
                 stroke={isActive ? '#2dc84c' : '#e2e8f0'}
                 strokeWidth={isActive ? '3' : '1.5'}
                 style={{
                   stroke: isActive ? '#2dc84c' : undefined,
-                  opacity: isActive ? 1 : 0.4
+                  opacity: isActive ? 1 : 0.4,
+                  transition: 'all 0.6s cubic-bezier(0.25, 1, 0.5, 1)',
+                  transitionDelay: isActive ? `${index * 0.025}s` : '0s'
                 }}
               />
             );
           })}
         </svg>
+
+        {/* Breathing glow blob behind label */}
+        <div className="absolute w-28 h-28 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-xl animate-pulse-glow pointer-events-none" />
 
         {/* Center label */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -75,7 +103,7 @@ export default function WorkoutGauge({ percent, onSetPercent }: WorkoutGaugeProp
             <span className="text-lg font-bold text-emerald-500 dark:text-emerald-400 ml-0.5">%</span>
           </div>
           <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mt-1 flex items-center gap-1">
-            <Trophy className="w-3.5 h-3.5" />
+            <Trophy className="w-3.5 h-3.5 animate-pulse-icon text-emerald-500" />
             Active
           </span>
         </div>

@@ -166,7 +166,7 @@ export default function StatsChart({ stats, onAddStat }: StatsChartProps) {
       {/* Interactive Chart Area */}
       <div className="relative w-full overflow-x-auto select-none" style={{ minHeight: '300px' }}>
         <div style={{ minWidth: '800px', position: 'relative' }}>
-          <svg className="w-full h-auto" viewBox={`0 0 ${viewWidth} ${viewHeight}`}>
+          <svg key={timeframe} className="w-full h-auto" viewBox={`0 0 ${viewWidth} ${viewHeight}`}>
             {/* Grid Lines (Horizontal) */}
             {[0, 30, 60, 90, 120].map((val, idx) => {
               const y = paddingTop + chartHeight - (val / maxVal) * chartHeight;
@@ -250,7 +250,7 @@ export default function StatsChart({ stats, onAddStat }: StatsChartProps) {
               strokeWidth="3.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="transition-all duration-500"
+              className="transition-all duration-500 animate-draw-path-1"
             />
             <path
               d={getPathString(cyclingCoords)}
@@ -259,7 +259,7 @@ export default function StatsChart({ stats, onAddStat }: StatsChartProps) {
               strokeWidth="3.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="transition-all duration-500"
+              className="transition-all duration-500 animate-draw-path-2"
             />
             <path
               d={getPathString(yogaCoords)}
@@ -268,36 +268,66 @@ export default function StatsChart({ stats, onAddStat }: StatsChartProps) {
               strokeWidth="3.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="transition-all duration-500"
+              className="transition-all duration-500 animate-draw-path-3"
             />
 
             {/* Circles / Dots for active nodes */}
             {runningCoords.map((coord, i) => (
-              <circle
-                key={`run-${i}`}
-                cx={coord.x}
-                cy={coord.y}
-                r={hoveredIndex === i ? "6" : "4.5"}
-                className="stroke-[#2dc84c] stroke-[3] fill-white dark:fill-slate-900 transition-all cursor-pointer"
-              />
+              <g key={`run-grp-${i}`}>
+                {/* Continuous breathing glow ring */}
+                <circle
+                  cx={coord.x}
+                  cy={coord.y}
+                  r="7"
+                  className="stroke-[#2dc84c] stroke-[1.5] fill-none pointer-events-none animate-breathe-glow"
+                  style={{ animationDelay: `${0.8 + i * 0.15}s` }}
+                />
+                <circle
+                  cx={coord.x}
+                  cy={coord.y}
+                  r={hoveredIndex === i ? "6" : "4.5"}
+                  className="stroke-[#2dc84c] stroke-[3] fill-white dark:fill-slate-900 transition-all cursor-pointer animate-pop-circle"
+                  style={{ animationDelay: `${0.8 + i * 0.05}s` }}
+                />
+              </g>
             ))}
             {cyclingCoords.map((coord, i) => (
-              <circle
-                key={`cyc-${i}`}
-                cx={coord.x}
-                cy={coord.y}
-                r={hoveredIndex === i ? "6" : "4.5"}
-                className="stroke-[#ff9f43] stroke-[3] fill-white dark:fill-slate-900 transition-all cursor-pointer"
-              />
+              <g key={`cyc-grp-${i}`}>
+                {/* Continuous breathing glow ring */}
+                <circle
+                  cx={coord.x}
+                  cy={coord.y}
+                  r="7"
+                  className="stroke-[#ff9f43] stroke-[1.5] fill-none pointer-events-none animate-breathe-glow"
+                  style={{ animationDelay: `${1.0 + i * 0.15}s` }}
+                />
+                <circle
+                  cx={coord.x}
+                  cy={coord.y}
+                  r={hoveredIndex === i ? "6" : "4.5"}
+                  className="stroke-[#ff9f43] stroke-[3] fill-white dark:fill-slate-900 transition-all cursor-pointer animate-pop-circle"
+                  style={{ animationDelay: `${1.0 + i * 0.05}s` }}
+                />
+              </g>
             ))}
             {yogaCoords.map((coord, i) => (
-              <circle
-                key={`yog-${i}`}
-                cx={coord.x}
-                cy={coord.y}
-                r={hoveredIndex === i ? "6" : "4.5"}
-                className="stroke-[#00a8ff] stroke-[3] fill-white dark:fill-slate-900 transition-all cursor-pointer"
-              />
+              <g key={`yog-grp-${i}`}>
+                {/* Continuous breathing glow ring */}
+                <circle
+                  cx={coord.x}
+                  cy={coord.y}
+                  r="7"
+                  className="stroke-[#00a8ff] stroke-[1.5] fill-none pointer-events-none animate-breathe-glow"
+                  style={{ animationDelay: `${1.2 + i * 0.15}s` }}
+                />
+                <circle
+                  cx={coord.x}
+                  cy={coord.y}
+                  r={hoveredIndex === i ? "6" : "4.5"}
+                  className="stroke-[#00a8ff] stroke-[3] fill-white dark:fill-slate-900 transition-all cursor-pointer animate-pop-circle"
+                  style={{ animationDelay: `${1.2 + i * 0.05}s` }}
+                />
+              </g>
             ))}
           </svg>
 
