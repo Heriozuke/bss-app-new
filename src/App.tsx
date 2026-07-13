@@ -107,12 +107,6 @@ const DEFAULT_BG_IMAGES = [
 const getUserBgImage = (user: Employee | null) => {
   if (!user) return DEFAULT_BG_IMAGES[0];
   
-  // Check if the user has uploaded/saved a custom background image in localStorage
-  if (typeof window !== 'undefined') {
-    const customBg = localStorage.getItem(`bss_content_bg_image_${user.id}`);
-    if (customBg) return customBg;
-  }
-  
   // Role-specific defaults
   if (user.role === 'ADMIN') {
     return 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80'; // Modern Office
@@ -319,7 +313,10 @@ export default function App() {
     if (currentUser) {
       setSettingsUsername(currentUser.email);
       setSettingsAvatar(currentUser.avatar || '');
-      setContentBgImage(getUserBgImage(currentUser));
+      if (typeof window !== 'undefined') {
+        const customBg = localStorage.getItem(`bss_content_bg_image_${currentUser.id}`);
+        setContentBgImage(customBg || '');
+      }
     } else {
       setContentBgImage('');
     }
@@ -955,7 +952,11 @@ export default function App() {
     // Save header color, content background image, character selection, and logo
     localStorage.setItem('bss_header_color', headerColor);
     if (currentUser) {
-      localStorage.setItem(`bss_content_bg_image_${currentUser.id}`, contentBgImage);
+      if (contentBgImage) {
+        localStorage.setItem(`bss_content_bg_image_${currentUser.id}`, contentBgImage);
+      } else {
+        localStorage.removeItem(`bss_content_bg_image_${currentUser.id}`);
+      }
     }
     localStorage.setItem('bss_selected_character', selectedCharacter);
     localStorage.setItem('bss_custom_logo', customLogo);
@@ -1702,7 +1703,12 @@ export default function App() {
           {/* MAIN PAGE CONTENT CONTAINER */}
           <main 
             className="p-6 flex-1 space-y-6 transition-all duration-300" 
-            style={contentBgImage ? { backgroundImage: `url(${contentBgImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' } : undefined}
+            style={{ 
+              backgroundImage: `url(${contentBgImage || getUserBgImage(currentUser)})`, 
+              backgroundSize: 'cover', 
+              backgroundPosition: 'center', 
+              backgroundAttachment: 'fixed' 
+            }}
           >
             
             {/* TABS 1: BSS-DASHBOARD (OVERVIEW) */}
