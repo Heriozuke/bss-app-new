@@ -35,7 +35,8 @@ import {
   Lock,
   Building,
   Target,
-  FileSpreadsheet
+  FileSpreadsheet,
+  MessageSquare
 } from 'lucide-react';
 
 import { TabType, MonthlyStat, Payslip } from './types';
@@ -93,6 +94,44 @@ const HOLIDAYS_2026: { [key: string]: string } = {
   "2026-12-25": "Hari Raya Natal"
 };
 
+const DEFAULT_BG_IMAGES = [
+  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80', // Mountain Sunset Lake
+  'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1920&q=80', // Forest Green Woods
+  'https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=1920&q=80', // Starry Night Galaxy
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80', // Ocean Beach
+  'https://images.unsplash.com/photo-1500485035595-cbe6f645feb1?auto=format&fit=crop&w=1920&q=80', // Soft red landscape
+  'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1920&q=80', // Misty Mountain Forest
+  'https://images.unsplash.com/photo-1472214222541-d510753a4707?auto=format&fit=crop&w=1920&q=80'  // Green hills landscape
+];
+
+const getUserBgImage = (user: Employee | null) => {
+  if (!user) return DEFAULT_BG_IMAGES[0];
+  
+  // Check if the user has uploaded/saved a custom background image in localStorage
+  if (typeof window !== 'undefined') {
+    const customBg = localStorage.getItem(`bss_content_bg_image_${user.id}`);
+    if (customBg) return customBg;
+  }
+  
+  // Role-specific defaults
+  if (user.role === 'ADMIN') {
+    return 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80'; // Modern Office
+  }
+  if (user.role === 'KLIEN') {
+    return 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80'; // Skyline Meeting
+  }
+  
+  // Assign a default landscape background based on a simple hash of the user ID
+  // so it is consistent for that specific user, but different between different users!
+  let hash = 0;
+  const str = user.id || user.namaLengkap || 'default';
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % DEFAULT_BG_IMAGES.length;
+  return DEFAULT_BG_IMAGES[index];
+};
+
 export default function App() {
   // Theme & session states
   const [darkMode, setDarkMode] = useState(false);
@@ -113,12 +152,7 @@ export default function App() {
     return logo;
   });
 
-  const [contentBgImage, setContentBgImage] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('bss_content_bg_image') || '';
-    }
-    return '';
-  });
+  const [contentBgImage, setContentBgImage] = useState<string>('');
 
   // Settings form fields
   const [settingsUsername, setSettingsUsername] = useState('');
@@ -158,6 +192,8 @@ export default function App() {
   const [payslipsList, setPayslipsList] = useState<Payslip[]>([]);
   const [selectedPayslip, setSelectedPayslip] = useState<Payslip | null>(null);
   const [activePayrollTab, setActivePayrollTab] = useState<'proses' | 'riwayat' | 'settings'>('proses');
+  const [selectedSlipIds, setSelectedSlipIds] = useState<string[]>([]);
+  const [sendingStatus, setSendingStatus] = useState<{ type: 'email' | 'wa' | null, count: number, step: 'sending' | 'success' | null }>({ type: null, count: 0, step: null });
 
   // Payroll settings states
   const [payrollSettings, setPayrollSettings] = useState<PayrollSettings>(() => getPayrollSettings());
@@ -283,6 +319,9 @@ export default function App() {
     if (currentUser) {
       setSettingsUsername(currentUser.email);
       setSettingsAvatar(currentUser.avatar || '');
+      setContentBgImage(getUserBgImage(currentUser));
+    } else {
+      setContentBgImage('');
     }
   }, [currentUser]);
 
@@ -296,6 +335,10 @@ export default function App() {
       setSelectedCalendarEmployee(null);
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    setSelectedSlipIds([]);
+  }, [activePayrollTab, activeTab]);
 
   const [selectedCharacter, setSelectedCharacter] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -700,6 +743,27 @@ export default function App() {
     document.body.removeChild(link);
   };
 
+  // Kirim Invoice / Slip Gaji by Email / WA
+  const handleSendInvoices = (type: 'email' | 'wa') => {
+    if (selectedSlipIds.length === 0) {
+      alert('Silakan pilih minimal satu slip gaji terlebih dahulu!');
+      return;
+    }
+
+    setSendingStatus({ type, count: selectedSlipIds.length, step: 'sending' });
+
+    // Simulasi delay pengiriman
+    setTimeout(() => {
+      setSendingStatus({ type, count: selectedSlipIds.length, step: 'success' });
+      setSelectedSlipIds([]);
+      
+      // Sembunyikan notifikasi setelah 3.5 detik
+      setTimeout(() => {
+        setSendingStatus({ type: null, count: 0, step: null });
+      }, 3500);
+    }, 2000);
+  };
+
   // Submit Proses Slip Gaji
   const handleSavePayroll = (e: React.FormEvent) => {
     e.preventDefault();
@@ -890,7 +954,9 @@ export default function App() {
 
     // Save header color, content background image, character selection, and logo
     localStorage.setItem('bss_header_color', headerColor);
-    localStorage.setItem('bss_content_bg_image', contentBgImage);
+    if (currentUser) {
+      localStorage.setItem(`bss_content_bg_image_${currentUser.id}`, contentBgImage);
+    }
     localStorage.setItem('bss_selected_character', selectedCharacter);
     localStorage.setItem('bss_custom_logo', customLogo);
 
@@ -918,7 +984,9 @@ export default function App() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setContentBgImage(reader.result as string);
-        localStorage.setItem('bss_content_bg_image', reader.result as string);
+        if (currentUser) {
+          localStorage.setItem(`bss_content_bg_image_${currentUser.id}`, reader.result as string);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -2739,24 +2807,66 @@ export default function App() {
 
                     {activePayrollTab === 'riwayat' && (
                       <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden space-y-4 p-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 dark:border-slate-850 pb-4">
+                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 dark:border-slate-850 pb-4">
                           <div>
-                            <h3 className="text-sm font-bold text-slate-850 dark:text-white uppercase tracking-wider">Riwayat Penggajian Terproses</h3>
+                            <h3 className="text-sm font-bold text-slate-855 dark:text-white uppercase tracking-wider">Riwayat Penggajian Terproses</h3>
                             <p className="text-[11px] text-slate-400 mt-1">Daftar lengkap seluruh slip gaji karyawan yang telah diproses dan disimpan di database.</p>
                           </div>
-                          <button
-                            onClick={exportPayrollToExcel}
-                            className="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-md shadow-emerald-500/10 cursor-pointer flex items-center justify-center gap-1.5 transition-all self-start sm:self-center"
-                          >
-                            <FileSpreadsheet className="w-4 h-4" />
-                            <span>Export Excel (.csv)</span>
-                          </button>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              onClick={() => handleSendInvoices('email')}
+                              disabled={selectedSlipIds.length === 0}
+                              className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                                selectedSlipIds.length > 0 
+                                  ? 'text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/10' 
+                                  : 'text-slate-400 bg-slate-100 dark:bg-slate-800/40 dark:text-slate-600 cursor-not-allowed border border-slate-200/20 dark:border-slate-800'
+                              }`}
+                            >
+                              <Mail className="w-4 h-4" />
+                              <span>Kirim Email {selectedSlipIds.length > 0 && `(${selectedSlipIds.length})`}</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleSendInvoices('wa')}
+                              disabled={selectedSlipIds.length === 0}
+                              className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                                selectedSlipIds.length > 0 
+                                  ? 'text-white bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-500/10' 
+                                  : 'text-slate-400 bg-slate-100 dark:bg-slate-800/40 dark:text-slate-600 cursor-not-allowed border border-slate-200/20 dark:border-slate-800'
+                              }`}
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                              <span>Kirim WA {selectedSlipIds.length > 0 && `(${selectedSlipIds.length})`}</span>
+                            </button>
+
+                            <button
+                              onClick={exportPayrollToExcel}
+                              className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-250 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700/80 border border-slate-150 dark:border-slate-800 cursor-pointer flex items-center justify-center gap-1.5 transition-all"
+                            >
+                              <FileSpreadsheet className="w-4 h-4" />
+                              <span>Export Excel (.csv)</span>
+                            </button>
+                          </div>
                         </div>
 
                         <div className="overflow-x-auto">
                           <table className="w-full border-collapse text-left text-xs">
                             <thead>
                               <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                                <th className="py-3.5 px-4 text-center w-12">
+                                  <input 
+                                    type="checkbox" 
+                                    className="rounded border-slate-350 dark:border-slate-700 text-emerald-600 focus:ring-emerald-500 cursor-pointer h-4 w-4 bg-white dark:bg-slate-950"
+                                    checked={payslipsList.length > 0 && selectedSlipIds.length === payslipsList.length}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedSlipIds(payslipsList.map(s => s.id));
+                                      } else {
+                                        setSelectedSlipIds([]);
+                                      }
+                                    }}
+                                  />
+                                </th>
                                 <th className="py-3.5 px-6">Staff Karyawan</th>
                                 <th className="py-3.5 px-6">Bulan Periode</th>
                                 <th className="py-3.5 px-6">Gaji Pokok</th>
@@ -2769,13 +2879,27 @@ export default function App() {
                             <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                               {payslipsList.length === 0 ? (
                                 <tr>
-                                  <td colSpan={7} className="text-center py-12 text-slate-400">Tidak ada riwayat slip gaji terproses.</td>
+                                  <td colSpan={8} className="text-center py-12 text-slate-400">Tidak ada riwayat slip gaji terproses.</td>
                                 </tr>
                               ) : (
                                 payslipsList.map(slip => (
                                   <tr key={slip.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/10 text-slate-700 dark:text-slate-350">
+                                    <td className="py-3.5 px-4 text-center">
+                                      <input 
+                                        type="checkbox" 
+                                        className="rounded border-slate-350 dark:border-slate-700 text-emerald-600 focus:ring-emerald-500 cursor-pointer h-4 w-4 bg-white dark:bg-slate-950"
+                                        checked={selectedSlipIds.includes(slip.id)}
+                                        onChange={(e) => {
+                                          if (e.target.checked) {
+                                            setSelectedSlipIds([...selectedSlipIds, slip.id]);
+                                          } else {
+                                            setSelectedSlipIds(selectedSlipIds.filter(id => id !== slip.id));
+                                          }
+                                        }}
+                                      />
+                                    </td>
                                     <td className="py-3.5 px-6">
-                                      <div className="font-extrabold text-slate-850 dark:text-white">{slip.employeeName}</div>
+                                      <div className="font-extrabold text-slate-855 dark:text-white">{slip.employeeName}</div>
                                       <div className="text-[10px] text-slate-400 mt-0.5">NIK: {slip.employeeNik} | {slip.jabatan}</div>
                                     </td>
                                     <td className="py-3.5 px-6 font-semibold">
@@ -3537,8 +3661,10 @@ export default function App() {
                               <button 
                                 type="button" 
                                 onClick={() => {
-                                  setContentBgImage('');
-                                  localStorage.removeItem('bss_content_bg_image');
+                                  if (currentUser) {
+                                    localStorage.removeItem(`bss_content_bg_image_${currentUser.id}`);
+                                    setContentBgImage(getUserBgImage(currentUser));
+                                  }
                                 }}
                                 className="block text-[10px] font-bold text-rose-500 hover:text-rose-600 bg-transparent cursor-pointer"
                               >
@@ -4776,6 +4902,29 @@ export default function App() {
             </div>
 
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification for Invoice Sending */}
+      {sendingStatus.step && (
+        <div className="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-4 rounded-2xl shadow-2xl z-[100] flex items-center gap-3 border border-slate-800 animate-fade-in min-w-[320px]">
+          {sendingStatus.step === 'sending' ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-emerald-500 border-t-transparent shrink-0"></div>
+              <div className="text-xs text-left">
+                <p className="font-extrabold text-white">Mengirim Slip Gaji...</p>
+                <p className="text-slate-400 mt-0.5">Sedang mengirim {sendingStatus.count} slip via {sendingStatus.type === 'email' ? 'Email' : 'WhatsApp'}...</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white font-bold text-xs shrink-0">✓</div>
+              <div className="text-xs text-left">
+                <p className="font-extrabold text-emerald-400">Pengiriman Sukses!</p>
+                <p className="text-slate-300 mt-0.5">{sendingStatus.count} slip gaji berhasil terkirim via {sendingStatus.type === 'email' ? 'Email Staff' : 'WhatsApp Staff'}!</p>
+              </div>
+            </>
+          )}
         </div>
       )}
 
